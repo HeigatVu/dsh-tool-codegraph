@@ -37,7 +37,7 @@ spec:
         Required PR checks. Waits for the workflow to register on the head, then
         watches it to completion; a failing check exits non-zero.
       command: bash
-      args: [-c, 'for i in $(seq 1 60); do [ "$(gh pr checks --json name 2>/dev/null | jq length 2>/dev/null)" -gt 0 ] && break; sleep 10; done; gh pr checks --watch --fail-fast']
+      args: [-c, 'for i in $(seq 1 60); do n=$(gh pr checks --json name 2>/dev/null | jq length 2>/dev/null || echo 0); [ "${n:-0}" -gt 0 ] && break; sleep 10; done; gh pr checks --watch --fail-fast']
       timeoutSeconds: 3600
 
     reviews:
@@ -49,7 +49,7 @@ spec:
       auto:
         verifier: reviewbots
         command: bash
-        args: [-c, 'gh pr checks --json name,bucket 2>/dev/null | jq -e "map(select(.name | test(\"CodeRabbit|Cursor|Bugbot\"; \"i\"))) | all(.bucket == \"pass\" or .bucket == \"skipping\")" > /dev/null']
+        args: [-c, '(gh pr checks --json name,bucket 2>/dev/null || echo "[]") | jq -e "map(select(.name | test(\"CodeRabbit|Cursor|Bugbot\"; \"i\"))) | all(.bucket == \"pass\" or .bucket == \"skipping\")" > /dev/null']
         description: Requires every review-bot check-run to be pass or skipping.
 
     pr_evidence:
