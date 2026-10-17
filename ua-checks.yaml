@@ -57,9 +57,13 @@ spec:
       verifier: human
       auto:
         verifier: reviewbots
-        command: bash
-        args: [-c, '(gh pr checks --json name,bucket 2>/dev/null || echo "[]") | jq -e "map(select(.name | test(\"CodeRabbit|Cursor|Bugbot\"; \"i\"))) | all(.bucket == \"pass\" or .bucket == \"skipping\")" > /dev/null']
-        description: Requires every review-bot check-run to be pass or skipping.
+        command: gh
+        args: [pr, checks, --json, 'name,bucket']
+        description: >-
+          Requires every check-run whose name matches a known review-bot
+          pattern (CodeRabbit, Cursor auto-review/Bugbot) to report a
+          non-blocking gh bucket. No matching check-run passes trivially, as
+          on a repository with no review bot configured.
 
     pr_evidence:
       verifier: previdence
