@@ -1,7 +1,7 @@
 # @ducvu/dsh-tool-codegraph
 
 Local, editable fork of [`@m1khal3v/dsh-tool-codegraph`](https://github.com/m1khal3v/dsh-tool-codegraph)
-v1.0.3 (MIT, © Anton Mikhalev — see [LICENSE](LICENSE)) owned by this repo.
+v1.0.4 (MIT, © Anton Mikhalev — see [LICENSE](LICENSE)) owned by this repo.
 
 It mounts the ten `codegraph_*` agent tools into DSH. Every tool shells out to
 the local `codegraph` CLI (https://github.com/colbymchenry/codegraph) through
@@ -10,9 +10,12 @@ the local `codegraph` CLI (https://github.com/colbymchenry/codegraph) through
 ## Why this fork exists
 
 - The npm plugin pins `peerDependencies` to `@deepseek-ai/* ^0.1.1-rc.1`, which
-  dsh 0.2.0-rc.2 skips at boot unless an exact-version exemption is granted.
-  This fork declares the dsh-automation-style peer lists (including
-  `0.2.0-rc.2`) so no exemption is needed.
+  dsh skips at boot unless an exact-version exemption is granted. This fork
+  declares the dsh-automation-style peer lists by exact prerelease, through
+  `0.2.1-rc.2`, so no exemption is needed.
+- Since dsh 0.2.1 the shell service exposes `resolve()` and `execute()` and no
+  longer `run()`; this fork calls the current API, so a boot on a 0.2.0
+  harness is not supported.
 - Owning the source here means tool behavior (names, descriptions, argv
   building, timeouts, rendering) can be modified freely to match changes in the
   upstream codegraph CLI.

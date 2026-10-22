@@ -1,0 +1,127 @@
+# How each check in this workspace is produced.
+#
+# The runtime reads this file when a run reaches a verifier node, so the command
+# behind "the check exited 0" lives in git: weakening a check is a reviewed diff
+# rather than an argument nobody sees.
+#
+# Reference: .ai-agents/references/loop-and-graph-engineering.md
+
+apiVersion: ultragentic/v1
+kind: CheckPlan
+
+metadata:
+  description: Checks for the codegraph fork; mirrors the GitHub Actions workflow in .github/workflows/check.yml.
+
+spec:
+  checks:
+    unit:
+      description: The compatibility test; the same command CI runs.
+      command: node
+      args: [--test, tests/peers.test.mjs]
+      timeoutSeconds: 300
+
+    slop:
+      description: >-
+        Weighted finding density, with the rule "do not get worse": the baseline
+        is the 0 this repository already carries, so a change that adds slop has
+        to raise this line in a reviewed diff.
+      command: ultragentic
+      args: [slop, audit, --fail-on, "0", .]
+      timeoutSeconds: 300
+
+    lint:
+      description: Syntax of every JavaScript file this fork ships, with nothing suppressed.
+      command: bash
+      args: [-c, 'node --check lib/index.js && node --check lib/invariant.js && node --check tests/peers.test.mjs']
+      timeoutSeconds: 300
+
+    pr_open:
+      description: Exits non-zero when the current branch has no pull request.
+      command: gh
+      args: [pr, view, --json, url]
+      timeoutSeconds: 120
+
+    ci:
+      description: >-
+        Required PR checks. Waits for the workflow to register on the head, then
+        watches it to completion; a failing check exits non-zero.
+      command: bash
+      args: [-c, 'for i in $(seq 1 60); do n=$(gh pr checks --json name 2>/dev/null | jq length 2>/dev/null || echo 0); [ "${n:-0}" -gt 0 ] && break; sleep 10; done; gh pr checks --watch --fail-fast']
+      timeoutSeconds: 3600
+
+    reviews:
+      description: >-
+        No external reviewer exposes a queryable status here. On auto, every
+        check-run whose name matches a known review-bot pattern must report a
+        non-blocking bucket; no matching check-run passes trivially.
+      verifier: human
+      auto:
+        verifier: reviewbots
+        command: gh
+        args: [pr, checks, --json, 'name,bucket']
+        description: >-
+          Requires every check-run whose name matches a known review-bot
+          pattern (CodeRabbit, Cursor auto-review/Bugbot) to report a
+          non-blocking gh bucket. No matching check-run passes trivially, as
+          on a repository with no review bot configured.
+
+    pr_evidence:
+      verifier: previdence
+      description: >-
+        Reads .agent-state/runs/<date>/<slug>/<version>/pr-evidence/MANIFEST.md
+        and ATTACHED.md, then requires a reviewer-visible declaration on the open
+        PR body or comments. For a non-visual change the declaration names the
+        kind as none with its reason; evidence binaries stay under .agent-state/.
+
+    ship:
+      verifier: human
+      auto:
+        verifier: shipdecision
+        description: >-
+          Reads .agent-state/runs/<date>/<slug>/<version>/ship/DECISION.md;
+          passes only on a parsed "Ship Decision: GO" with zero blockers.
+
+    bug_hunt_ok:
+      verifier: bughunt
+      description: >-
+        Reads .agent-state/runs/<date>/<slug>/<version>/bug-hunt/FINDINGS.md.
+
+    expectation_ok:
+      verifier: expectation
+      description: >-
+        Reads .agent-state/runs/<date>/<slug>/<version>/expectation/REVIEW.md;
+        passes only when status is pass and every acceptance row is pass.
+
+    review_ok:
+      verifier: review
+      description: >-
+        Reads .agent-state/runs/<date>/<slug>/<version>/review/REVIEW.md.
+
+    release_ok:
+      verifier: release
+      description: >-
+        Reads .agent-state/runs/<date>/<slug>/<version>/release/REVIEW.md.
+
+    experiment_done:
+      verifier: experiment
+      description: >-
+        Reads .agent-state/runs/<date>/<slug>/<version>/experiment/STATUS.md;
+        passes when the experiment is terminal (done or failed).
+
+    results_acceptable:
+      verifier: results
+      description: >-
+        Reads experiment/METRICS.json together with STATUS.md; passes only when
+        the experiment finished done and every declared metric meets its threshold.
+
+    main_ci:
+      description: CI on the default branch after a merge landed.
+      command: gh
+      args: [run, list, --branch, main, --limit, "1", --json, "status,conclusion", --jq, 'if .[0].status == "completed" and .[0].conclusion == "success" then "ok" else halt_error(1) end']
+      timeoutSeconds: 3600
+
+    tasks_remaining:
+      verifier: tasks
+      description: >-
+        Reads the task list and TASKS.md; passes while any task is not settled or
+        any acceptance box under it is still open.
