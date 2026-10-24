@@ -23,7 +23,7 @@ const DSH_PEERS = [
 
 // The 0.2.1 release candidates this fork claims on top of the upstream 0.2.0
 // base. A new harness version needs a new entry here, on purpose.
-const CLAIMED = ["0.2.1-rc.1", "0.2.1-rc.2"];
+const CLAIMED = ["0.2.1-rc.1", "0.2.1-rc.2", "0.2.1-rc.3"];
 
 test("every dsh peer names the versions the fork claims", () => {
 	const peers = manifest.peerDependencies ?? {};
@@ -45,7 +45,7 @@ test("every dsh peer names the versions the fork claims", () => {
 
 test("the fork version moved past the upstream base", () => {
 	assert.equal(manifest.name, "@ducvu/dsh-tool-codegraph");
-	assert.equal(manifest.version, "1.0.4");
+	assert.equal(manifest.version, "1.0.5");
 });
 
 test("the shell call uses the 0.2.1 API", () => {
@@ -63,7 +63,7 @@ test("the shell call uses the 0.2.1 API", () => {
 test("the README claims the same support the manifest does", () => {
 	const readme = read("README.md");
 	assert.ok(
-		readme.includes("0.2.1-rc.2"),
+		readme.includes("0.2.1-rc.3"),
 		"README does not name the newest supported harness"
 	);
 	assert.ok(

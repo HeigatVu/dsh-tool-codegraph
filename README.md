@@ -12,7 +12,7 @@ the local `codegraph` CLI (https://github.com/colbymchenry/codegraph) through
 - The npm plugin pins `peerDependencies` to `@deepseek-ai/* ^0.1.1-rc.1`, which
   dsh skips at boot unless an exact-version exemption is granted. This fork
   declares the dsh-automation-style peer lists by exact prerelease, through
-  `0.2.1-rc.2`, so no exemption is needed.
+  `0.2.1-rc.3`, so no exemption is needed.
 - Since dsh 0.2.1 the shell service exposes `resolve()` and `execute()` and no
   longer `run()`; this fork calls the current API, so a boot on a 0.2.0
   harness is not supported.
